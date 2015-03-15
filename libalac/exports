@@ -1,0 +1,8 @@
+{
+  global:
+    init;
+    encode;
+    deinit;
+  local:
+    *;
+};
