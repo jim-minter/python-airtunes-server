@@ -192,6 +192,8 @@ def main():
 
     first = True
     last_sync = 0
+    seq = 1
+    start = clock.now()
     while True:
         now = clock.now()
         if first or now - last_sync > 1:
@@ -200,10 +202,13 @@ def main():
 
         if args.s:
             send_data(rtsp, stdin.get_next_frame(), first)
+            time.sleep(start + (seq * 352.0/44100) - now)
+
         else:
             send_data(rtsp, alsa.get_next_frame(), first)
 
         first = False
+        seq += 1
 
     time.sleep(2)
     rtsp.do_flush()
