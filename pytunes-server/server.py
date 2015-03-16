@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import alsa
 import argparse
 import clock
 import collections
@@ -173,6 +172,7 @@ timingserver_thread.start()
 
 def parse_args():
     ap = argparse.ArgumentParser()
+    ap.add_argument("-s", action="store_true")
     ap.add_argument("host")
     ap.add_argument("port")
     return ap.parse_args()
@@ -181,6 +181,12 @@ def main():
     global rtsp
 
     args = parse_args()
+
+    if args.s:
+        import stdin
+    else:
+        import alsa
+
     rtsp = RTSP((args.host, int(args.port)))
 
     first = True
@@ -191,7 +197,10 @@ def main():
             send_sync(rtsp, first)
             last_sync = now
 
-        send_data(rtsp, alsa.get_next_frame(), first)
+        if args.s:
+            send_data(rtsp, stdin.get_next_frame(), first)
+        else:
+            send_data(rtsp, alsa.get_next_frame(), first)
 
         first = False
 
