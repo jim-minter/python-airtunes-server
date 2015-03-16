@@ -181,6 +181,7 @@ def main():
     global rtsp
 
     args = parse_args()
+    args.host = socket.gethostbyname(args.host)
 
     if args.s:
         import stdin
