@@ -2,8 +2,10 @@
 
 import ctypes
 import sys
+import os
 
-libalac = ctypes.CDLL("../libalac/libalac.so", use_errno=True)
+libalac = ctypes.CDLL(os.path.dirname(__file__) + "/../libalac/libalac.so",
+                      use_errno=True)
 encoder = libalac.init()
 
 def get_next_frame():
