@@ -61,7 +61,7 @@ class RTSP(RTSPBase):
         self.session_id = "3509167977"
         self.url = "rtsp://%s/%s" % (self.local_address[0], self.session_id),
         self.seq = 0
-        self.rtptime = 88200
+        self.rtptime = 0.25 * 44100
         self.do_announce()
         self.do_setup()
         self.do_record()
@@ -137,7 +137,7 @@ def send_sync(rtsp, first=False):
     else:
         data = "80d40007".decode("hex")
 
-    data += struct.pack(">LQL", rtsp.rtptime - 88200, clock.ntpstamp(), rtsp.rtptime)
+    data += struct.pack(">LQL", rtsp.rtptime - 0.25 * 44100, clock.ntpstamp(), rtsp.rtptime)
 
     controlserver.socket.sendto(data, (rtsp.remote_address[0], rtsp.remote_control_port))
 
@@ -158,7 +158,7 @@ def send_data(rtsp, alac, first=False):
     rtsp.rtptime += 352
 
 loglock = threading.Lock()
-log = collections.deque(maxlen=250)
+log = collections.deque(maxlen=int(0.25 * 44100 / 352))
 
 controlserver = SocketServer.UDPServer(("0.0.0.0", 6001), ControlHandler)
 controlserver_thread = threading.Thread(target=controlserver.serve_forever)
