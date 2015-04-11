@@ -59,7 +59,7 @@ class RTSP(RTSPBase):
     def __init__(self, remote_address):
         super(RTSP, self).__init__(remote_address)
         self.session_id = "3509167977"
-        self.url = "rtsp://%s/%s" % (self.local_address[0], self.session_id),
+        self.url = "rtsp://%s/%s" % (self.local_address[0], self.session_id)
         self.seq = 0
         self.rtptime = 0.25 * 44100
         self.do_announce()
