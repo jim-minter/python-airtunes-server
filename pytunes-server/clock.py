@@ -13,7 +13,7 @@ class Timespec(ctypes.Structure):
 
 def gettime():
     t = Timespec()
-    if librt.clock_gettime(CLOCK_MONOTONIC_RAW , ctypes.byref(t)):
+    if libc.clock_gettime(CLOCK_MONOTONIC_RAW , ctypes.byref(t)):
         errno = ctypes.get_errno()
         raise OSError(errno, os.strerror(errno))
 
@@ -27,4 +27,4 @@ def ntpstamp():
     t = gettime()
     return (2208988800 + t.tv_sec << 32) + (2**32 * t.tv_nsec / 1e9)
 
-librt = ctypes.CDLL("librt.so", use_errno=True)
+libc = ctypes.CDLL("libc.so.6", use_errno=True)
