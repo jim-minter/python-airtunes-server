@@ -65,7 +65,7 @@ class RTSP(RTSPBase):
         self.do_announce()
         self.do_setup()
         self.do_record()
-        self.set_volume("-25")
+        self.set_volume("-20")
 
     def request(self, verb, url, h, body=None):
         rv = super(RTSP, self).request(verb, url, h, body)
@@ -202,7 +202,9 @@ def main():
 
         if args.s:
             send_data(rtsp, stdin.get_next_frame(), first)
-            time.sleep(start + (seq * 352.0/44100) - now)
+            delay = start + (seq * 352.0/44100) - now
+            if delay > 0:
+                time.sleep(delay)
 
         else:
             send_data(rtsp, alsa.get_next_frame(), first)
