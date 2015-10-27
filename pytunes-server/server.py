@@ -9,6 +9,7 @@ import struct
 import threading
 import time
 
+
 class RTSPBase(object):
     def __init__(self, remote_address):
         self.remote_address = remote_address
@@ -55,6 +56,7 @@ class RTSPBase(object):
         self._send_request(verb, url, h, body)
         return self._read_response()
 
+
 class RTSP(RTSPBase):
     def __init__(self, remote_address):
         super(RTSP, self).__init__(remote_address)
@@ -99,23 +101,25 @@ a=fmtp:96 352 0 16 40 10 14 2 255 0 0 44100""" % {"session_id": self.session_id,
     def do_record(self):
         self.request("RECORD", self.url,
                      {"Session": "1", "Range": "npt=0-",
-                      "RTP-Info": "seq=%u;rtptime=%u" % (self.seq, self.rtptime)})
+                      "RTP-Info": "seq=%u;rtptime=%u" % (self.seq,
+                                                         self.rtptime)})
 
     def set_volume(self, volume):
         self.request("SET_PARAMETER", self.url,
                      {"Session": "1", "Content-Type": "text/parameters"},
                      "volume: %s\r\n" % volume)
-    
+
     def do_flush(self):
         self.request("FLUSH", self.url,
                      {"Session": "1", "RTP-Info": "seq=%u;rtptime=%u" % (self.seq, self.rtptime)})
 
 
-
 class TimingHandler(SocketServer.BaseRequestHandler):
     def handle(self):
         data = self.request[0]
-        reply = "80d3000700000000".decode("hex") + data[24:32] + struct.pack(">Q", clock.ntpstamp()) + struct.pack(">Q", clock.ntpstamp())
+        reply = "80d3000700000000".decode("hex") + data[24:32] + \
+                struct.pack(">Q", clock.ntpstamp()) + \
+                struct.pack(">Q", clock.ntpstamp())
 
         self.request[1].sendto(reply, self.client_address)
 
@@ -128,8 +132,9 @@ class ControlHandler(SocketServer.BaseRequestHandler):
         with loglock:
             for i in log:
                 if i[0] >= seq and i[0] < seq + count:
-                    self.request[1].sendto(i[1], (rtsp.remote_address[0], rtsp.remote_server_port))
-        
+                    self.request[1].sendto(i[1], (rtsp.remote_address[0],
+                                                  rtsp.remote_server_port))
+
 
 def send_sync(rtsp, first=False):
     if(first):
@@ -137,9 +142,12 @@ def send_sync(rtsp, first=False):
     else:
         data = "80d40007".decode("hex")
 
-    data += struct.pack(">LQL", rtsp.rtptime - 0.25 * 44100, clock.ntpstamp(), rtsp.rtptime)
+    data += struct.pack(">LQL", rtsp.rtptime - 0.25 * 44100, clock.ntpstamp(),
+                        rtsp.rtptime)
 
-    controlserver.socket.sendto(data, (rtsp.remote_address[0], rtsp.remote_control_port))
+    controlserver.socket.sendto(data, (rtsp.remote_address[0],
+                                       rtsp.remote_control_port))
+
 
 def send_data(rtsp, alac, first=False):
     if(first):
@@ -152,10 +160,12 @@ def send_data(rtsp, alac, first=False):
     with loglock:
         log.append((rtsp.seq, data))
 
-    controlserver.socket.sendto(data, (rtsp.remote_address[0], rtsp.remote_server_port))
+    controlserver.socket.sendto(data, (rtsp.remote_address[0],
+                                       rtsp.remote_server_port))
 
     rtsp.seq = (rtsp.seq + 1) & 0xFFFF
     rtsp.rtptime += 352
+
 
 loglock = threading.Lock()
 log = collections.deque(maxlen=int(0.25 * 44100 / 352))
@@ -170,12 +180,14 @@ timingserver_thread = threading.Thread(target=timingserver.serve_forever)
 timingserver_thread.daemon = True
 timingserver_thread.start()
 
+
 def parse_args():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-s", action="store_true")
+    ap.add_argument("-d", metavar="device")
     ap.add_argument("host")
     ap.add_argument("port")
     return ap.parse_args()
+
 
 def main():
     global rtsp
@@ -183,10 +195,12 @@ def main():
     args = parse_args()
     args.host = socket.gethostbyname(args.host)
 
-    if args.s:
-        import stdin
-    else:
+    if args.d:
         import alsa
+        alsa.init(args.d)
+
+    else:
+        import stdin
 
     rtsp = RTSP((args.host, int(args.port)))
 
@@ -200,14 +214,14 @@ def main():
             send_sync(rtsp, first)
             last_sync = now
 
-        if args.s:
+        if args.d:
+            send_data(rtsp, alsa.get_next_frame(), first)
+
+        else:
             send_data(rtsp, stdin.get_next_frame(), first)
             delay = start + (seq * 352.0/44100) - now
             if delay > 0:
                 time.sleep(delay)
-
-        else:
-            send_data(rtsp, alsa.get_next_frame(), first)
 
         first = False
         seq += 1

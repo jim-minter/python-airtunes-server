@@ -4,12 +4,6 @@ import alsaaudio
 import ctypes
 import os
 
-pcm = alsaaudio.PCM(type=alsaaudio.PCM_CAPTURE, card="hw:2,1")
-pcm.setperiodsize(352)
-
-libalac = ctypes.CDLL(os.path.dirname(__file__) + "/../libalac/libalac.so",
-                      use_errno=True)
-encoder = libalac.init()
 
 def get_next_frame():
     data = pcm.read()[1]
@@ -23,5 +17,18 @@ def get_next_frame():
 
     return out[:l.value]
 
+
+def init(card):
+    global pcm
+
+    pcm = alsaaudio.PCM(type=alsaaudio.PCM_CAPTURE, card=card)
+    pcm.setperiodsize(352)
+
+
 def deinit():
     libalac.deinit(encoder)
+
+
+libalac = ctypes.CDLL(os.path.dirname(__file__) + "/../libalac/libalac.so",
+                      use_errno=True)
+encoder = libalac.init()

@@ -4,9 +4,6 @@ import ctypes
 import sys
 import os
 
-libalac = ctypes.CDLL(os.path.dirname(__file__) + "/../libalac/libalac.so",
-                      use_errno=True)
-encoder = libalac.init()
 
 def get_next_frame():
     data = sys.stdin.read(352 * 2 * 2)
@@ -20,5 +17,11 @@ def get_next_frame():
 
     return out[:l.value]
 
+
 def deinit():
     libalac.deinit(encoder)
+
+
+libalac = ctypes.CDLL(os.path.dirname(__file__) + "/../libalac/libalac.so",
+                      use_errno=True)
+encoder = libalac.init()
