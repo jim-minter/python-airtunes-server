@@ -22,10 +22,16 @@ In the above example, the IP is 192.168.1.24 and the port is 1026.
 
 ```
 $ mpg123 -e s16 -r 44100 --stereo -s $FILE.mp3 | ./server.py $IP $PORT
-$ arecord [-D $DEVICE] -t raw -f cd | ./server.py $IP $PORT
+$ arecord [-D hw:$DEVICE] -t raw -f cd | ./server.py $IP $PORT
 ```
 
-### To play CD (16-bit little endian, 44.1kHz, stereo) samples via snd-aloop:
+### To play CD samples from another ALSA device:
+
+```
+$ ./server.py -d hw:$DEVICE $IP $PORT
+```
+
+### To play CD samples via snd-aloop:
 
 ```
 $ sudo modprobe snd-aloop
