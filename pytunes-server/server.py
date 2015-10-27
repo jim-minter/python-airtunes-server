@@ -3,6 +3,7 @@
 import argparse
 import clock
 import collections
+import os
 import SocketServer
 import socket
 import struct
@@ -67,7 +68,6 @@ class RTSP(RTSPBase):
         self.do_announce()
         self.do_setup()
         self.do_record()
-        self.set_volume("-20")
 
     def request(self, verb, url, h, body=None):
         rv = super(RTSP, self).request(verb, url, h, body)
@@ -206,13 +206,19 @@ def main():
 
     first = True
     last_sync = 0
+    last_mtime = 0
     seq = 1
     start = clock.now()
     while True:
         now = clock.now()
-        if first or now - last_sync > 1:
+        if now - last_sync > 1:
             send_sync(rtsp, first)
             last_sync = now
+
+        mtime = os.stat(".volume").st_mtime
+        if last_mtime != mtime:
+            rtsp.set_volume(open(".volume").read().strip())
+            last_mtime = mtime
 
         if args.d:
             send_data(rtsp, alsa.get_next_frame(), first)
