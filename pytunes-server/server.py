@@ -215,9 +215,9 @@ def main():
             send_sync(rtsp, first)
             last_sync = now
 
-        mtime = os.stat(".volume").st_mtime
+        mtime = os.stat(os.path.dirname(__file__) + "/.volume").st_mtime
         if last_mtime != mtime:
-            rtsp.set_volume(open(".volume").read().strip())
+            rtsp.set_volume(open(os.path.dirname(__file__) + "/.volume").read().strip())
             last_mtime = mtime
 
         if args.d:

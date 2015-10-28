@@ -39,4 +39,5 @@ $ ./server.py -d hw:Loopback,1 $IP $PORT &
 
 $ aplay -D hw:Loopback -t raw -f cd $FILE.pcm
 $ mplayer -ao alsa:device=hw=Loopback $FILE.mp3
+$ mpg123 -a hw:Loopback $FILE.mp3
 ```
