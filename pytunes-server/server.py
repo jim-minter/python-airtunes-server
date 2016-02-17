@@ -209,28 +209,32 @@ def main():
     last_mtime = 0
     seq = 1
     start = clock.now()
-    while True:
-        now = clock.now()
-        if now - last_sync > 1:
-            send_sync(rtsp, first)
-            last_sync = now
+    try:
+        while True:
+            now = clock.now()
+            if now - last_sync > 1:
+                send_sync(rtsp, first)
+                last_sync = now
 
-        mtime = os.stat(os.path.dirname(__file__) + "/.volume").st_mtime
-        if last_mtime != mtime:
-            rtsp.set_volume(open(os.path.dirname(__file__) + "/.volume").read().strip())
-            last_mtime = mtime
+            mtime = os.stat(os.path.dirname(__file__) + "/.volume").st_mtime
+            if last_mtime != mtime:
+                rtsp.set_volume(open(os.path.dirname(__file__) + "/.volume").read().strip())
+                last_mtime = mtime
 
-        if args.d:
-            send_data(rtsp, alsa.get_next_frame(), first)
+            if args.d:
+                send_data(rtsp, alsa.get_next_frame(), first)
 
-        else:
-            send_data(rtsp, stdin.get_next_frame(), first)
-            delay = start + (seq * 352.0/44100) - now
-            if delay > 0:
-                time.sleep(delay)
+            else:
+                send_data(rtsp, stdin.get_next_frame(), first)
+                delay = start + (seq * 352.0/44100) - now
+                if delay > 0:
+                    time.sleep(delay)
 
-        first = False
-        seq += 1
+            first = False
+            seq += 1
+
+    except EOFError:
+        pass
 
     time.sleep(2)
     rtsp.do_flush()
