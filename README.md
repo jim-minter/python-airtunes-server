@@ -31,7 +31,7 @@ $ arecord [-D hw:$DEVICE] -t raw -f cd | ./server.py $IP $PORT
 $ ./server.py -d hw:$DEVICE $IP $PORT
 ```
 
-### To play CD samples via snd-aloop:
+### To play CD samples via ALSA snd-aloop:
 
 ```
 $ sudo modprobe snd-aloop
@@ -40,4 +40,13 @@ $ ./server.py -d hw:Loopback,1 $IP $PORT &
 $ aplay -D hw:Loopback -t raw -f cd $FILE.pcm
 $ mplayer -ao alsa:device=hw=Loopback $FILE.mp3
 $ mpg123 -a hw:Loopback $FILE.mp3
+```
+
+### To play CD samples via PulseAudio null-sink:
+
+```
+$ pactl load-module module-null-sink sink_name=pytunes sink_properties=device.description=PyTunes
+$ ./server.py -s pytunes.monitor $IP $PORT &
+
+$ mplayer -ao pulse::pytunes $FILE.mp3
 ```

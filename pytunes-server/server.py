@@ -184,6 +184,7 @@ timingserver_thread.start()
 def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument("-d", metavar="device")
+    ap.add_argument("-s", metavar="stream")
     ap.add_argument("host")
     ap.add_argument("port")
     return ap.parse_args()
@@ -198,6 +199,10 @@ def main():
     if args.d:
         import alsa
         alsa.init(args.d)
+
+    elif args.s:
+        import pulse
+        pulse.init(args.s)
 
     else:
         import stdin
@@ -223,6 +228,9 @@ def main():
 
             if args.d:
                 send_data(rtsp, alsa.get_next_frame(), first)
+
+            elif args.s:
+                send_data(rtsp, pulse.get_next_frame(), first)
 
             else:
                 send_data(rtsp, stdin.get_next_frame(), first)
