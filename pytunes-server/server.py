@@ -3,6 +3,7 @@
 import argparse
 import clock
 import collections
+import mpd
 import os
 import SocketServer
 import socket
@@ -109,6 +110,18 @@ a=fmtp:96 352 0 16 40 10 14 2 255 0 0 44100""" % {"session_id": self.session_id,
                      {"Session": "1", "Content-Type": "text/parameters"},
                      "volume: %s\r\n" % volume)
 
+    def set_title(self, minm, asar, asal):
+        data = ("minm" + struct.pack(">I", len(minm)) + minm +
+                "asar" + struct.pack(">I", len(asar)) + asar +
+                "asal" + struct.pack(">I", len(asal)) + asal)
+        data = "mlit" + struct.pack(">I", len(data)) + data
+
+        self.request("SET_PARAMETER", self.url,
+                     {"Session": "1",
+                      "RTP-Info": "rtptime=%u" % self.rtptime,
+                      "Content-Type": "application/x-dmap-tagged"},
+                     data)
+
     def do_flush(self):
         self.request("FLUSH", self.url,
                      {"Session": "1", "RTP-Info": "seq=%u;rtptime=%u" % (self.seq, self.rtptime)})
@@ -181,10 +194,21 @@ timingserver_thread.daemon = True
 timingserver_thread.start()
 
 
+lastcurrentsong = None
+def set_title(m, rtsp):
+    global lastcurrentsong
+
+    currentsong = m.currentsong()
+    if lastcurrentsong != currentsong:
+        rtsp.set_title(currentsong.get("Title", ""), currentsong.get("Artist", ""), currentsong.get("Album", ""))
+        lastcurrentsong = currentsong
+
+
 def parse_args():
     ap = argparse.ArgumentParser()
     ap.add_argument("-d", metavar="device")
     ap.add_argument("-s", metavar="stream")
+    ap.add_argument("-m", metavar="mpdhost")
     ap.add_argument("host")
     ap.add_argument("port")
     return ap.parse_args()
@@ -207,6 +231,9 @@ def main():
     else:
         import stdin
 
+    if args.m:
+        m = mpd.Mpd(args.m)
+
     rtsp = RTSP((args.host, int(args.port)))
 
     first = True
@@ -219,6 +246,8 @@ def main():
             now = clock.now()
             if now - last_sync > 1:
                 send_sync(rtsp, first)
+                if args.m:
+                    set_title(m, rtsp)
                 last_sync = now
 
             mtime = os.stat(os.path.dirname(__file__) + "/.volume").st_mtime
