@@ -5,7 +5,7 @@ At the very least, this works well on Fedora against a Philips AD7050W...
 ### To discover IP and port of airtunes speaker:
 
 ```
-$ avahi-browse -r _raop._tcp
+$ avahi-browse -ar
 + eth0 IPv4 0025D10C55B4@Philips AD7050W 0C55B4           AirTunes Remote Audio local
 = eth0 IPv4 0025D10C55B4@Philips AD7050W 0C55B4           AirTunes Remote Audio local
    hostname = [Philips-AD7050W-0C55B4.local]
