@@ -194,14 +194,27 @@ timingserver_thread.daemon = True
 timingserver_thread.start()
 
 
+currentsong = None
+currentsonglock = threading.Lock()
+
+def mpd_run():
+    global currentsong
+    m = mpd.Mpd(args.m)
+
+    while True:
+        with currentsonglock:
+            currentsong = m.send("currentsong")
+        m.send("idle player")
+
+
 lastcurrentsong = None
-def set_title(m, rtsp):
+def set_title(rtsp):
     global lastcurrentsong
 
-    currentsong = m.currentsong()
-    if lastcurrentsong != currentsong:
-        rtsp.set_title(currentsong.get("Title", ""), currentsong.get("Artist", ""), currentsong.get("Album", ""))
-        lastcurrentsong = currentsong
+    with currentsonglock:
+        if currentsong and lastcurrentsong != currentsong:
+            rtsp.set_title(currentsong.get("Title", ""), currentsong.get("Artist", ""), currentsong.get("Album", ""))
+            lastcurrentsong = currentsong
 
 
 def parse_args():
@@ -233,7 +246,9 @@ def main():
         import stdin
 
     if args.m:
-        m = mpd.Mpd(args.m)
+        mpd_thread = threading.Thread(target=mpd_run)
+        mpd_thread.daemon = True
+        mpd_thread.start()
 
     if args.v:
         with open(os.path.dirname(__file__) + "/.volume", "w") as f:
@@ -252,7 +267,7 @@ def main():
             if now - last_sync > 1:
                 send_sync(rtsp, first)
                 if args.m:
-                    set_title(m, rtsp)
+                    set_title(rtsp)
                 last_sync = now
 
             mtime = os.stat(os.path.dirname(__file__) + "/.volume").st_mtime
