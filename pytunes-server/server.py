@@ -280,7 +280,9 @@ def main():
 
     time.sleep(2)
     rtsp.do_flush()
-    alsa.deinit()
+
+    if args.d:
+        alsa.deinit()
 
 if __name__ == "__main__":
     main()
