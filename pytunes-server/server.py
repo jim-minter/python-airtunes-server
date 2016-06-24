@@ -209,6 +209,7 @@ def parse_args():
     ap.add_argument("-d", metavar="device")
     ap.add_argument("-s", metavar="stream")
     ap.add_argument("-m", metavar="mpdhost")
+    ap.add_argument("-v", metavar="volume")
     ap.add_argument("host")
     ap.add_argument("port")
     return ap.parse_args()
@@ -233,6 +234,10 @@ def main():
 
     if args.m:
         m = mpd.Mpd(args.m)
+
+    if args.v:
+        with open(os.path.dirname(__file__) + "/.volume", "w") as f:
+            print >>f, args.v
 
     rtsp = RTSP((args.host, int(args.port)))
 
