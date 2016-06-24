@@ -197,9 +197,9 @@ timingserver_thread.start()
 currentsong = None
 currentsonglock = threading.Lock()
 
-def mpd_run():
+def mpd_run(host):
     global currentsong
-    m = mpd.Mpd(args.m)
+    m = mpd.Mpd(host)
 
     while True:
         with currentsonglock:
@@ -246,7 +246,7 @@ def main():
         import stdin
 
     if args.m:
-        mpd_thread = threading.Thread(target=mpd_run)
+        mpd_thread = threading.Thread(target=mpd_run, args=(args.m, ))
         mpd_thread.daemon = True
         mpd_thread.start()
 
