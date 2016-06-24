@@ -4,16 +4,18 @@ import socket
 
 class Mpd(object):
     def __init__(self, host):
-        self.s = socket.create_connection((host, 6600))
-        self.f = self.s.makefile()
-        if not self.f.readline().startswith("OK "):
-            raise Exception()
+        self.host = host
 
     def currentsong(self):
-        print >>self.f, "currentsong"
-        self.f.flush()
+        s = socket.create_connection((self.host, 6600))
+        f = s.makefile()
+        if not f.readline().startswith("OK "):
+            raise Exception()
+
+        print >>f, "currentsong"
+        f.flush()
         h = {}
-        for line in self.f:
+        for line in f:
             line = line.strip()
             if line == "OK":
                 break
