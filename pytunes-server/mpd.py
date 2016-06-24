@@ -17,6 +17,6 @@ class Mpd(object):
             line = line.strip()
             if line == "OK":
                 break
-            line = line.split(": ")
+            line = line.split(": ", 1)
             h[line[0]] = line[1]
         return h
