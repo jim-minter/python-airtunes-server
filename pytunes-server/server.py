@@ -7,6 +7,7 @@ import mpd
 import os
 import SocketServer
 import socket
+import spotify
 import struct
 import threading
 import time
@@ -122,6 +123,13 @@ a=fmtp:96 352 0 16 40 10 14 2 255 0 0 44100""" % {"session_id": self.session_id,
                       "Content-Type": "application/x-dmap-tagged"},
                      data)
 
+    def set_jpeg(self, jpeg):
+        self.request("SET_PARAMETER", self.url,
+                     {"Session": "1",
+                      "RTP-Info": "rtptime=%u" % self.rtptime,
+                      "Content-Type": "image/jpeg"},
+                     jpeg)
+
     def do_flush(self):
         self.request("FLUSH", self.url,
                      {"Session": "1", "RTP-Info": "seq=%u;rtptime=%u" % (self.seq, self.rtptime)})
@@ -207,6 +215,16 @@ def mpd_run(host):
         m.send("idle player")
 
 
+def spotify_run():
+    global currentsong
+    s = spotify.Spotify()
+
+    while True:
+        with currentsonglock:
+            currentsong = s.query()
+        time.sleep(1)
+
+
 lastcurrentsong = None
 def set_title(rtsp):
     global lastcurrentsong
@@ -214,6 +232,8 @@ def set_title(rtsp):
     with currentsonglock:
         if currentsong and lastcurrentsong != currentsong:
             rtsp.set_title(currentsong.get("Title", ""), currentsong.get("Artist", ""), currentsong.get("Album", ""))
+            if "Jpeg" in currentsong:
+                rtsp.set_jpeg(currentsong.get("Jpeg"))
             lastcurrentsong = currentsong
 
 
@@ -222,6 +242,7 @@ def parse_args():
     ap.add_argument("-d", metavar="device")
     ap.add_argument("-s", metavar="stream")
     ap.add_argument("-m", metavar="mpdhost")
+    ap.add_argument("-p", action="store_true")
     ap.add_argument("-v", metavar="volume")
     ap.add_argument("host")
     ap.add_argument("port")
@@ -250,6 +271,11 @@ def main():
         mpd_thread.daemon = True
         mpd_thread.start()
 
+    if args.p:
+        spotify_thread = threading.Thread(target=spotify_run)
+        spotify_thread.daemon = True
+        spotify_thread.start()
+
     if args.v:
         with open(os.path.dirname(__file__) + "/.volume", "w") as f:
             print >>f, args.v
@@ -266,7 +292,7 @@ def main():
             now = clock.now()
             if now - last_sync > 1:
                 send_sync(rtsp, first)
-                if args.m:
+                if args.m or args.p:
                     set_title(rtsp)
                 last_sync = now
 
